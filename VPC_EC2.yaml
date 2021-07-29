@@ -1,0 +1,267 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'This template deploys VPC, two Subnets (Public and Private) and EC2 instance'
+
+Parameters:
+ 
+  MyVPCName:
+    Description: Enter the name of the VPC
+    Type: String
+
+  MyVPCCIDR:
+    ConstraintDescription: CIDR block parameter must be in the form between /16 to /28 CIDR values
+    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+    Default: 10.0.0.0/24
+    Description: Enter the IP ranges with valid CIDR notation for the VPC
+    Type: String
+
+  MyVPCTenancy:
+    AllowedValues:
+      - default
+      - dedicated
+    Default: default
+    Description: Enter the Tenancy for the VPC
+    Type: String
+
+  MyPubSubName:
+    Description: Enter the name of the Public Subnet
+    Type: String
+
+  MyPriSubName:
+    Description: Enter the name of the Private Subnet
+    Type: String
+
+  PubSubnetCIDR:
+    Default: 10.0.0.0/28
+    Description: Enter the IP ranges with valid CIDR notation for the Public subnet
+    Type: String
+
+  PriSubnetCIDR:
+    Default: 10.0.0.16/28
+    Description: Enter the IP ranges with valid CIDR notation for the Private subnet
+    Type: String
+
+  PubSubnetAvailabilityZone:
+    AllowedValues: 
+      - ap-south-1a
+      - ap-south-1b
+    Default:  ap-south-1a
+    Description:  Select the Availabilty zone for Public Subnet
+    Type: String
+
+  PriSubnetAvailabilityZone:
+  	AllowedValues: 
+      - ap-south-1a
+      - ap-south-1b
+    Default:  ap-south-1b
+    Description:  Select the Availabilty zone for Private Subnet
+    Type: String
+
+  MyRouteTableName:
+    Description: Enter the name of the Route Table for Internet access
+    Type: String
+
+  MyInternetGatewayName:
+    Description: Enter the name of the Internet Gateway
+    Type: String
+
+  MySecurityGroupName:
+    Description: Enter the name of the Security Group
+    Type: String
+
+  EC2InstanceName:
+    Description: Enter the name of EC2 instance
+    Type: String
+    
+  InstanceAMIImage:
+    Default: ami-0655793980c0bf43f
+    Description: Select the AMI image for the Windows EC2 instance
+    Type: String
+
+  EC2InstanceType:
+    AllowedValues: 
+      - t2.nano
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+    Default: t2.micro
+    Description: Select the EC2 instance type
+    Type: String
+
+  LoginKeyPair:
+    Default: WinKey
+    Description: Select from the existing keys for the EC2 instance
+    Type: AWS::EC2::KeyPair::KeyName
+
+  EIPName:
+    Description: Enter the name of EIP to be attached to EC2 instance
+    Type: String
+
+Resources:
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref MyVPCCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: !Ref MyVPCTenancy
+      Tags:
+        - Key: Name
+          Value: !Ref MyVPCName
+
+  PubSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Ref PubSubnetAvailabilityZone
+      CidrBlock: !Ref PubSubnetCIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Ref MyPubSubName
+
+  PriSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Ref PriSubnetAvailabilityZone
+      CidrBlock: !Ref PriSubnetCIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+
+        - Key: Name
+          Value: !Ref MyPriSubName
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Ref 
+
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Ref 
+
+
+  InternetRoute:
+    Type: AWS::EC2::Route
+    Properties:
+       RouteTableId: !Ref RouteTable
+       DestinationCidrBlock: 0.0.0.0/0
+       GatewayId: !Ref 
+
+
+  SubnetRouteAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref PubSubnet
+
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+        VpcId: !Ref VPC        
+        GroupDescription: Allow RDP connection to EC2 windows server
+        SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3389
+          ToPort: 3389
+          CidrIp: 0.0.0.0/0
+        SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 3389
+          ToPort: 3389
+          CidrIp: 0.0.0.0/0
+        Tags:
+        - Key: Name
+          Value: !Ref 
+
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 8
+            VolumeType: gp2
+            DeleteOnTermination: true
+      AvailabilityZone: !Ref PubSubnetAvailabilityZone
+      ImageId: !Ref InstanceAMIImage
+      InstanceInitiatedShutdownBehavior: stop
+      InstanceType: !Ref EC2InstanceType
+      KeyName: !Ref LoginKeyPair
+      SecurityGroupIds: 
+        - Ref: EC2SecurityGroup
+      SubnetId: !Ref PubSubnet
+      Tags:
+      - Key: Name
+        Value: !Ref EC2InstanceName
+
+  GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref 
+
+
+  ElasticIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref EC2Instance
+      Tags:
+      - Key: Name
+        Value: !Ref EIPName
+    DependsOn: GatewayAttachment
+
+  EIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      AllocationId: !GetAtt ElasticIP.AllocationId
+      InstanceId: !Ref EC2Instance
+
+Outputs:
+
+  VPCID:
+    Description: ID of the VPC
+    Value: !Ref VPC
+
+  PUBSUBNETID:
+    Description: ID of the Public Subnet
+    Value: !Ref PubSubnet
+
+  PRISUBNETID:
+    Description: ID of the Private Subnet
+    Value: !Ref PriSubnet
+  
+  InstanceID:
+    Description: ID of the EC2 instance
+    Value: !Ref EC2Instance
+
+  AZDetails:
+    Description: Details of AZ where EC2 instance created
+    Value: !GetAtt EC2Instance.AvailabilityZone
+
+  PrivateIPDetails:
+    Description: Details of Private IP for EC2 instance
+    Value: !GetAtt EC2Instance.PrivateIp
+
+  PublicDNSname:
+    Description: Details of Public DNS for EC2 instance
+    Value: !GetAtt EC2Instance.PublicDnsName
+
+  PublicIPDetails:
+    Description: Details of Public IP of the EC2 instance
+    Value: !GetAtt EC2Instance.PublicIp
+
+  EIPAllocationDetails:
+    Description: Details of EIP Allocation ID attached to EC2Instance
+    Value: !GetAtt ElasticIP.AllocationId

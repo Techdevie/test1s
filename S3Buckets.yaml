@@ -1,0 +1,126 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'This template deploys three S3 buckets'
+
+Parameters:
+ 
+  MyS3BucketName:
+    ConstraintDescription: Name of the S3 bucket must be globally unique and must be in small letters
+    Description: Enter the name of the S3 bucket
+    Type: String
+
+Resources:
+  FirstS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead 
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
+      BucketName: !Ref MyS3BucketName
+      Tags:
+        - Key: CreatedFor
+          Value: CFNTemplate
+      VersioningConfiguration:
+          Status: Enabled
+      PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+    DeletionPolicy: Delete
+
+  SecondS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
+      Tags:
+        - Key: CreatedFor
+          Value: CFNTemplate
+      VersioningConfiguration:
+          Status: Enabled
+      PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+    DeletionPolicy: Delete
+
+  ThirdS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
+      Tags:
+        - Key: CreatedFor
+          Value: CFNTemplate
+      VersioningConfiguration:
+          Status: Enabled
+      PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+    DeletionPolicy: Delete
+
+
+Output:
+  FirstS3BucketName:
+    Description: Name of the first S3 bucket
+    Value: !Ref FirstS3Bucket
+
+  FirstS3BucketARN:
+    Description: ARN of the first S3 bucket
+    Value: !GetAtt FirstS3Bucket.Arn
+
+  FirstS3BucketDomain:
+    Description: Domain of the first S3 bucket
+    Value: !GetAtt FirstS3Bucket.DomainName
+
+  FirstS3BucketRegionalDomain:
+    Description: Domain of the first S3 bucket
+    Value: !GetAtt FirstS3Bucket.RegionalDomainName
+
+  SecondS3BucketName:
+    Description: Name of the Second S3 bucket
+    Value: !Ref SecondS3Bucket
+
+  SecondS3BucketARN:
+    Description: ARN of the Second S3 bucket
+    Value: !GetAtt SecondS3Bucket.Arn
+
+  SecondS3BucketDomain:
+    Description: Domain of the Second S3 bucket
+    Value: !GetAtt SecondS3Bucket.DomainName
+
+  SecondS3BucketRegionalDomain:
+    Description: Domain of the Second S3 bucket
+    Value: !GetAtt SecondS3Bucket.RegionalDomainName
+
+  ThirdS3BucketName:
+    Description: Name of the Third S3 bucket
+    Value: !Ref ThirdS3Bucket
+
+  ThirdS3BucketARN:
+    Description: ARN of the Third S3 bucket
+    Value: !GetAtt ThirdS3Bucket.Arn
+
+  ThirdS3BucketDomain:
+    Description: Domain of the Third S3 bucket
+    Value: !GetAtt ThirdS3Bucket.DomainName
+
+  ThirdS3BucketRegionalDomain:
+    Description: Regional Domain of the Third S3 bucket
+    Value: !GetAtt ThirdS3Bucket.
+
+
+
+    
